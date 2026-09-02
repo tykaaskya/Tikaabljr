@@ -5,6 +5,54 @@ let visibleCount = 20;
 let favorites = JSON.parse(localStorage.getItem("tykaasFavorites") || "[]");
 let selectedMovie = null;
 
+const POSTER_CACHE_KEY = "tykaasPosterCacheV2";
+const posterCache = JSON.parse(localStorage.getItem(POSTER_CACHE_KEY) || "{}");
+
+function posterFallback(movie){
+  return movie.poster || "https://images.unsplash.com/photo-1485846234645?auto=format&fit=crop&w=700&q=85";
+}
+function normalizeTitle(t){
+  return t.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+}
+function applyPosterToMovie(id, url){
+  const movie = movies.find(m => m.id === id);
+  if (!movie || !url) return;
+  movie.poster = url;
+  posterCache[normalizeTitle(movie.title)] = url;
+  document.querySelectorAll(`[data-poster-id="${id}"]`).forEach(el => el.style.backgroundImage = `url("${url}")`);
+  if(selectedMovie?.id === id) document.getElementById("modalPoster").style.backgroundImage = `url("${url}")`;
+  if(movies[0]?.id === id) document.getElementById("heroPoster").style.backgroundImage = `url("${url}")`;
+}
+async function loadRealPosters(){
+  const missing = movies.filter(m => !posterCache[normalizeTitle(m.title)]);
+  movies.forEach(m => {
+    const cached = posterCache[normalizeTitle(m.title)];
+    if(cached) m.poster = cached;
+  });
+  if(!missing.length){ renderMovies(); renderFavorites(); document.getElementById("heroPoster").style.backgroundImage=`url("${posterFallback(movies[0])}")`; return; }
+
+  // Wikipedia's public API supplies page thumbnails without an API key.
+  // Batching keeps the page fast while still giving each title its own image.
+  for(let start=0; start<missing.length; start+=50){
+    const batch = missing.slice(start, start+50);
+    const titles = batch.map(m => m.title).join("|");
+    try{
+      const url = "https://en.wikipedia.org/w/api.php?action=query&format=json&formatversion=2&prop=pageimages&piprop=thumbnail&pithumbsize=700&pilimit=50&redirects=1&origin=*&titles=" + encodeURIComponent(titles);
+      const data = await fetch(url).then(r => r.json());
+      const pages = data.query?.pages || [];
+      pages.forEach(page => {
+        if(!page.thumbnail?.source || !page.title) return;
+        const movie = batch.find(m => normalizeTitle(m.title) === normalizeTitle(page.title));
+        if(movie) applyPosterToMovie(movie.id, page.thumbnail.source);
+      });
+      localStorage.setItem(POSTER_CACHE_KEY, JSON.stringify(posterCache));
+      renderMovies(); renderFavorites();
+    }catch(err){
+      console.warn("Poster loading failed", err);
+    }
+  }
+}
+
 function renderMovies(){
   const allFilteredCount = movies.filter(m => { const q = document.getElementById("searchInput").value.toLowerCase().trim(); const mf = activeFilter === "All" || m.category === activeFilter || m.genres.includes(activeFilter); const ms = !q || `${m.title} ${m.category} ${m.genres.join(" ")}`.toLowerCase().includes(q); return mf && ms; }).length;
   const q = document.getElementById("searchInput").value.toLowerCase().trim();
@@ -22,7 +70,7 @@ function renderMovies(){
 function movieCard(m){
   const saved = favorites.includes(m.id);
   return `<article class="movie-card">
-    <div class="poster" style="background-image:url('${m.poster}')" onclick="openModal(${m.id})">
+    <div class="poster" data-poster-id="${m.id}" style="background-image:url('${posterFallback(m)}')" onclick="openModal(${m.id})">
       <span class="rating">★ ${m.rating}</span>
       <button class="fav ${saved ? "saved":""}" onclick="toggleFavorite(event,${m.id})">${saved?"♥":"♡"}</button>
     </div>
@@ -54,14 +102,14 @@ function renderFavorites(){
   if(!favorites.length){box.innerHTML='<p class="empty">Tap the ♡ on a movie to save it here.</p>';return;}
   box.innerHTML=favorites.map(id=>movies.find(m=>m.id===id)).filter(Boolean).map(m=>`
     <div class="fav-mini" onclick="openModal(${m.id})">
-      <div class="mini-poster" style="background-image:url('${m.poster}')"></div>
+      <div class="mini-poster" data-poster-id="${m.id}" style="background-image:url('${posterFallback(m)}')"></div>
       <div>${m.title}</div>
     </div>`).join("");
 }
 function openModal(id){
   selectedMovie=movies.find(m=>m.id===id);
   if(!selectedMovie)return;
-  document.getElementById("modalPoster").style.backgroundImage=`url('${selectedMovie.poster}')`;
+  document.getElementById("modalPoster").style.backgroundImage=`url("${posterFallback(selectedMovie)}")`;
   document.getElementById("modalCategory").textContent=selectedMovie.category;
   document.getElementById("modalTitle").textContent=selectedMovie.title;
   document.getElementById("modalMeta").textContent=`${selectedMovie.year} · ⭐ ${selectedMovie.rating} · ${selectedMovie.genres.join(" · ")}`;
@@ -89,6 +137,6 @@ function recommendMovie(){
 function focusSearch(){document.getElementById("searchInput").focus();document.getElementById("discover").scrollIntoView({behavior:"smooth"});}
 document.addEventListener("keydown",e=>{if(e.key==="Escape")closeModal()});
 
-document.getElementById("heroPoster").style.backgroundImage=`url('${movies[0].poster}')`;
+document.getElementById("heroPoster").style.backgroundImage=`url("${posterFallback(movies[0])}")`;
 document.getElementById("heroTitle").textContent=movies[0].title;
-renderMovies();renderFavorites();
+renderMovies();renderFavorites();loadRealPosters();

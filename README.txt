@@ -26,3 +26,6 @@ The "Watch / Official page" button currently opens JustWatch, a legal streaming 
 
 ## Customize
 Edit the `movies` array in `script.js` to add or replace titles, descriptions, poster URLs, genres, and official viewing links.
+
+POSTER UPDATE
+The 100 movie entries now automatically load real movie-related poster/page images from Wikipedia/Wikimedia's public MediaWiki PageImages API when the site is opened online. Images are cached in the browser so repeat visits load faster. If a title has no suitable Wikipedia page image, the original fallback image remains.
