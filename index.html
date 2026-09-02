@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TykaasMovie — Movie Recommendation</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="navbar">
+    <a class="brand" href="#"><span>Tykaas</span>Movie</a>
+    <nav>
+      <a href="#home">Home</a>
+      <a href="#discover">Discover</a>
+      <a href="#favorites">Favorites</a>
+    </nav>
+    <button class="nav-search" onclick="focusSearch()">Search</button>
+  </header>
+
+  <main>
+    <section class="hero" id="home">
+      <div class="hero-copy">
+        <p class="eyebrow">YOUR NEXT MOVIE NIGHT</p>
+        <h1>Find a movie<br><em>worth watching.</em></h1>
+        <p class="hero-text">Discover Western movies, K-Dramas, anime, and more — all in one elegant place.</p>
+        <div class="hero-actions">
+          <button class="primary" onclick="recommendMovie()">🎲 Recommend for me</button>
+          <a class="secondary" href="#discover">Explore movies</a>
+        </div>
+      </div>
+      <div class="hero-card">
+        <div class="hero-poster" id="heroPoster"></div>
+        <div class="hero-overlay">
+          <span>Featured tonight</span>
+          <strong id="heroTitle">The Truman Show</strong>
+          <small>Drama • Comedy • ⭐ 8.2</small>
+        </div>
+      </div>
+    </section>
+
+    <section class="discover" id="discover">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">EXPLORE</p>
+          <h2>What are you in the mood for?</h2>
+        </div>
+        <div class="search-box">
+          <span>⌕</span>
+          <input id="searchInput" type="search" placeholder="Search movies..." oninput="renderMovies()">
+        </div>
+      </div>
+
+      <div class="filters" id="filters">
+        <button class="filter active" data-filter="All">All</button>
+        <button class="filter" data-filter="Western">Western</button>
+        <button class="filter" data-filter="K-Drama">K-Drama</button>
+        <button class="filter" data-filter="Anime">Anime</button>
+        <button class="filter" data-filter="Romance">Romance</button>
+        <button class="filter" data-filter="Action">Action</button>
+        <button class="filter" data-filter="Comedy">Comedy</button>
+        <button class="filter" data-filter="Fantasy">Fantasy</button>
+        <button class="filter" data-filter="Mystery">Mystery</button>
+        <button class="filter" data-filter="Drama">Drama</button>
+      </div>
+
+      <div class="movie-grid" id="movieGrid"></div>
+      <p class="empty" id="emptyState" hidden>No movies found. Try another title or genre.</p>
+      <div class="load-more-wrap"><button class="secondary load-more" id="loadMore" onclick="loadMoreMovies()">Load more movies</button></div>
+    </section>
+
+    <section class="favorites-section" id="favorites">
+      <div class="section-heading compact">
+        <div>
+          <p class="eyebrow">YOUR LIST</p>
+          <h2>Favorites</h2>
+        </div>
+        <span class="count" id="favCount">0 saved</span>
+      </div>
+      <div class="favorite-strip" id="favoriteStrip">
+        <p class="empty">Tap the ♡ on a movie to save it here.</p>
+      </div>
+    </section>
+  </main>
+
+  <div class="modal" id="movieModal" aria-hidden="true">
+    <div class="modal-backdrop" onclick="closeModal()"></div>
+    <div class="modal-content">
+      <button class="close" onclick="closeModal()">×</button>
+      <div class="modal-poster" id="modalPoster"></div>
+      <div class="modal-info">
+        <span class="pill" id="modalCategory"></span>
+        <h2 id="modalTitle"></h2>
+        <p class="meta" id="modalMeta"></p>
+        <p id="modalDescription"></p>
+        <div class="modal-actions">
+          <button class="primary" id="watchButton">▶ Watch / Official page</button>
+          <button class="secondary" id="modalFav">♡ Add to favorites</button>
+        </div>
+        <p class="note">Note: TykaasMovie uses official/legal viewing links. Availability can vary by country and platform.</p>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <div class="brand"><span>Tykaas</span>Movie</div>
+    <p>Discover something you'll love. © 2026 TykaasMovie</p>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
